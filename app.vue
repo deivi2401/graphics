@@ -1,16 +1,36 @@
 <template>
-  <div class="w-64">
+  <div>
+    <div>
+    <label for="plaza-select">Selecciona una plaza:</label>
+    <select id="plaza-select" v-model="selectedPlazaId" @change="processData">
+      <option v-for="plaza in availablePlazas" :key="plaza" :value="plaza">
+        Plaza {{ plaza }}
+      </option>
+    </select>
+  </div>
+  <div>
     <ClientOnly>
-      <ApexCharts class="ml-20 max-w-sm rounded-lg shadow dark:bg-gray-800 dark:border-gray-700" type="line" :options="chartOptions" :series="chartSeries" />
+      <ApexCharts class="rounded-lg shadow max-w-xl" width="576" type="line" :options="chartOptions" :series="chartSeries" />
     </ClientOnly>
 
+    <div>
+      <label for="">Fecha de inicio: </label>
+      <DateSelect/>
+    </div>
+    
   </div>
+  </div>
+  
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import ApexCharts from 'vue3-apexcharts';
 import jsonData from './assets/agosto AV.json';
+
+const availablePlazas = [...new Set(jsonData.datos.map(item => item.plaza_id))]
+const selectedPlazaId = ref(availablePlazas[0])
+
 const chartOptions = ref({
   chart: {
     title: {
@@ -22,7 +42,8 @@ const chartOptions = ref({
     categories: [],
     labels: {
       format: 'dd/MM/yyyy'
-    }
+    },
+    range: 7
   },
   stroke: {
     curve: 'smooth' // Para líneas suavizadas
@@ -39,14 +60,19 @@ const chartSeries = ref([{
 
 const processData = () => {
   const groupedData = jsonData.datos.reduce((acc, item) => {
-    const date = item.fecha;
+    if(item.plaza_id == selectedPlazaId.value){
+    const dateString = item.fecha;
     const entradas = parseInt(item.entradas, 10);
-    acc[date] = (acc[date] || 0) + entradas;
+    acc[dateString] = (acc[dateString] || 0) + entradas;
+
+    }
+
     return acc;
   }, {});
 
   chartOptions.value.xaxis.categories = Object.keys(groupedData);
   chartSeries.value[0].data = Object.values(groupedData);
+  chartSeries.value[0].name = `Entradas Plaza ${selectedPlazaId.value}`
 };
 
 // Procesar los datos al montar el componente

@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt/ui": "^2.18.6",
     "@pinia-plugin-persistedstate/nuxt": "^1.2.0",
     "@popperjs/core": "^2.11.8",
     "@tato30/vue-pdf": "^1.9.3",
@@ -23,6 +24,7 @@
     "datatables.net-responsive": "^2.5.0",
     "datatables.net-select": "^1.7.0",
     "datatables.net-vue3": "^2.1.2",
+    "date-fns": "^4.1.0",
     "dayjs-nuxt": "^1.1.2",
     "epic-spinners": "^2.0.0",
     "export-from-json": "^1.7.3",
@@ -32,6 +34,7 @@
     "papaparse": "^5.4.1",
     "pinia": "^2.1.7",
     "placeholder-loading": "^0.6.0",
+    "v-calendar": "^3.1.2",
     "vue": "latest",
     "vue-chartjs": "^5.2.0",
     "vue-router": "latest",
