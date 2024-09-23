@@ -1,0 +1,45 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@pinia-plugin-persistedstate/nuxt": "^1.2.0",
+    "@popperjs/core": "^2.11.8",
+    "@tato30/vue-pdf": "^1.9.3",
+    "@vuelidate/core": "^2.0.3",
+    "@vuelidate/validators": "^2.0.4",
+    "@vuepic/vue-datepicker": "^6.0.0",
+    "cookie-universal-nuxt": "^2.2.2",
+    "datatables.net": "^1.13.6",
+    "datatables.net-buttons-dt": "^2.4.2",
+    "datatables.net-dt": "^1.13.6",
+    "datatables.net-responsive": "^2.5.0",
+    "datatables.net-select": "^1.7.0",
+    "datatables.net-vue3": "^2.1.2",
+    "dayjs-nuxt": "^1.1.2",
+    "epic-spinners": "^2.0.0",
+    "export-from-json": "^1.7.3",
+    "floating-vue": "^2.0.0-beta.24",
+    "html2canvas": "^1.4.1",
+    "nuxt": "^3.13.0",
+    "papaparse": "^5.4.1",
+    "pinia": "^2.1.7",
+    "placeholder-loading": "^0.6.0",
+    "vue": "latest",
+    "vue-chartjs": "^5.2.0",
+    "vue-router": "latest",
+    "vue3-apexcharts": "^1.4.4",
+    "vue3-tour": "^0.3.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.13"
+  }
+}
