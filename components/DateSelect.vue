@@ -2,12 +2,12 @@
 import { sub, format, isSameDay, type Duration } from 'date-fns'
 
 const ranges = [
-  { label: 'Last 7 days', duration: { days: 7 } },
-  { label: 'Last 14 days', duration: { days: 14 } },
-  { label: 'Last 30 days', duration: { days: 30 } },
-  { label: 'Last 3 months', duration: { months: 3 } },
-  { label: 'Last 6 months', duration: { months: 6 } },
-  { label: 'Last year', duration: { years: 1 } }
+  { label: 'Ultimos 7 dias', duration: { days: 7 } },
+  { label: 'Ultimos 4 dias', duration: { days: 14 } },
+  { label: 'Ultimos 30 dias', duration: { days: 30 } },
+  { label: 'Ultimos 3 meses', duration: { months: 3 } },
+  { label: 'Ultimos 6 meses', duration: { months: 6 } },
+  { label: 'Ultimo año', duration: { years: 1 } }
 ]
 const selected = ref({ start: sub(new Date(), { days: 14 }), end: new Date() })
 
