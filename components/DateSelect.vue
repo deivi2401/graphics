@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { sub, format, isSameDay, type Duration } from 'date-fns'
+import { useDateStore } from '~/stores/dateStore'
+import { createPinia } from 'pinia'
+import { createApp } from 'vue'
+import App from '~/app.vue'
+
+const pinia = createPinia()
+const app = createApp(App)
+app.use(pinia)
+
+const dateStore = useDateStore()
 
 const ranges = [
   { label: 'Ultimos 7 dias', duration: { days: 7 } },
-  { label: 'Ultimos 4 dias', duration: { days: 14 } },
+  { label: 'Ultimos 14 dias', duration: { days: 14 } },
   { label: 'Ultimos 30 dias', duration: { days: 30 } },
   { label: 'Ultimos 3 meses', duration: { months: 3 } },
   { label: 'Ultimos 6 meses', duration: { months: 6 } },
@@ -18,6 +28,10 @@ function isRangeSelected (duration: Duration) {
 function selectRange (duration: Duration) {
   selected.value = { start: sub(new Date(), duration), end: new Date() }
 }
+
+watch(selected,(newValue) => {
+  dateStore.updateDateRange(newValue)
+})
 </script>
 
 <template>

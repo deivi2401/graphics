@@ -14,8 +14,10 @@
     </ClientOnly>
 
     <div>
-      <label for="">Fecha de inicio: </label>
-      <DateSelect/>
+      <label for="">Fecha de inicio: {{ selectedDate }} </label>
+      <DateSelect v-model="selectedDate"/>
+      <p>Fecha seleccionada: {{ format(dateStore.selectedDateRange.start, 'd MMM, yyyy') }} - {{ format(dateStore.selectedDateRange.end, 'd MMM, yyyy') }}</p>
+  
     </div>
     
   </div>
@@ -27,6 +29,19 @@
 import { ref } from 'vue';
 import ApexCharts from 'vue3-apexcharts';
 import jsonData from './assets/agosto AV.json';
+import { format } from 'date-fns';
+import { useDateStore } from './stores/dateStore';
+import { createPinia } from 'pinia'
+import { createApp } from 'vue'
+import App from '~/app.vue'
+
+const pinia = createPinia()
+const app = createApp(App)
+app.use(pinia)
+
+const dateStore = useDateStore()
+
+const selectedDate = ref('')
 
 const availablePlazas = [...new Set(jsonData.datos.map(item => item.plaza_id))]
 const selectedPlazaId = ref(availablePlazas[0])
