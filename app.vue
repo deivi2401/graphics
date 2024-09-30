@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div>
+    <div class="m-6">
     <label for="plaza-select">Selecciona una plaza:</label>
     <select id="plaza-select" v-model="selectedPlazaId" @change="processData">
       <option v-for="plaza in availablePlazas" :key="plaza" :value="plaza">
@@ -8,19 +8,19 @@
       </option>
     </select>
   </div>
-  <div>
+  <div class="flex justify-center">
     <ClientOnly>
-      <ApexCharts class="rounded-lg shadow max-w-xl" width="576" type="line" :options="chartOptions" :series="chartSeries" />
+      <ApexCharts class=" rounded-lg shadow max-w-xl" width="576" type="line" :options="chartOptions" :series="chartSeries" />
     </ClientOnly>
-
-    <div>
-      <label for="">Fecha de inicio: {{ selectedDate }} </label>
-      <DateSelect v-model="selectedDate"/>
+  </div>
+    <div class="flex justify-center py-4">
+      <label for="">Fecha de inicio: </label>
+      <DateSelect/>
       <p>Fecha seleccionada: {{ format(dateStore.selectedDateRange.start, 'd MMM, yyyy') }} - {{ format(dateStore.selectedDateRange.end, 'd MMM, yyyy') }}</p>
   
     </div>
     
-  </div>
+  
   </div>
   
 </template>
@@ -30,10 +30,11 @@ import { ref } from 'vue';
 import ApexCharts from 'vue3-apexcharts';
 import jsonData from './assets/agosto AV.json';
 import { format } from 'date-fns';
-import { useDateStore } from './stores/dateStore';
+import { useDateStore } from './stores/dateStore.js';
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from '~/app.vue'
+
 
 const pinia = createPinia()
 const app = createApp(App)
@@ -41,7 +42,7 @@ app.use(pinia)
 
 const dateStore = useDateStore()
 
-const selectedDate = ref('')
+const parseDate = (dateString) => new Date(dateString);
 
 const availablePlazas = [...new Set(jsonData.datos.map(item => item.plaza_id))]
 const selectedPlazaId = ref(availablePlazas[0])
@@ -58,7 +59,7 @@ const chartOptions = ref({
     labels: {
       format: 'dd/MM/yyyy'
     },
-    range: 7
+    // range: 7
   },
   stroke: {
     curve: 'smooth' // Para líneas suavizadas
@@ -75,7 +76,9 @@ const chartSeries = ref([{
 
 const processData = () => {
   const groupedData = jsonData.datos.reduce((acc, item) => {
-    if(item.plaza_id == selectedPlazaId.value){
+    const date = parseDate(item.fecha)
+
+    if(item.plaza_id == selectedPlazaId.value && date >= dateStore.selectedDateRange.start && date <= dateStore.selectedDateRange.end){
     const dateString = item.fecha;
     const entradas = parseInt(item.entradas, 10);
     acc[dateString] = (acc[dateString] || 0) + entradas;

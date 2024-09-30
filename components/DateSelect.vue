@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { sub, format, isSameDay, type Duration } from 'date-fns'
-import { useDateStore } from '~/stores/dateStore'
+import { watch, ref } from 'vue'
+import { useDateStore } from '~/stores/dateStore.js'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from '~/app.vue'

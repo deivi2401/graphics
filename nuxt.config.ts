@@ -5,5 +5,5 @@ export default defineNuxtConfig({
     preference: 'light'
   },
   devtools: { enabled: true },
-  modules: ['@nuxt/ui']
+  modules: ['@nuxt/ui','@pinia/nuxt',"@pinia-plugin-persistedstate/nuxt"]
 })
