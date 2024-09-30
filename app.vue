@@ -28,7 +28,6 @@
 import { ref } from 'vue';
 import ApexCharts from 'vue3-apexcharts';
 import jsonData from './assets/agosto AV.json';
-import { format } from 'date-fns';
 import { useDateStore } from './stores/dateStore.js';
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
