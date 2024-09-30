@@ -20,7 +20,7 @@ const ranges = [
   { label: 'Ultimos 6 meses', duration: { months: 6 } },
   { label: 'Ultimo año', duration: { years: 1 } }
 ]
-const selected = ref({ start: sub(new Date(), { days: 14 }), end: new Date() })
+const selected = ref({ start: dateStore.selectedDateRange.start, end: dateStore.selectedDateRange.end })
 
 function isRangeSelected (duration: Duration) {
   return isSameDay(selected.value.start, sub(new Date(), duration)) && isSameDay(selected.value.end, new Date())
@@ -37,7 +37,7 @@ watch(selected,(newValue) => {
 
 <template>
   <UPopover :popper="{ placement: 'bottom-start' }">
-    <UButton icon="i-heroicons-calendar-days-20-solid">
+    <UButton color="blue" icon="i-heroicons-calendar-days-20-solid">
       {{ format(selected.start, 'd MMM, yyy') }} - {{ format(selected.end, 'd MMM, yyy') }}
     </UButton>
 
@@ -48,7 +48,7 @@ watch(selected,(newValue) => {
             v-for="(range, index) in ranges"
             :key="index"
             :label="range.label"
-            color="gray"
+            color="blue"
             variant="ghost"
             class="rounded-none px-6"
             :class="[isRangeSelected(range.duration) ? 'bg-gray-100 dark:bg-gray-800' : 'hover:bg-gray-50 dark:hover:bg-gray-800/50']"

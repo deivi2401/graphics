@@ -25,6 +25,7 @@
     "datatables.net-select": "^1.7.0",
     "datatables.net-vue3": "^2.1.2",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
     "dayjs-nuxt": "^1.1.2",
     "epic-spinners": "^2.0.0",
     "export-from-json": "^1.7.3",
