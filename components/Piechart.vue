@@ -2,11 +2,13 @@
   <div>
     <!-- Componente de gráfica de pie -->
     <VueApexCharts
+    v-if="pieChartData.length"
       type="pie" 
-      width="576"
       :options="chartOptions" 
-      :series="filteredData"
+      :series="pieChartData"
+      width="576"
     />
+    <p v-else>No hay datos disponibles para el rango de fechas seleccionado.</p>
   </div>
 </template>
 
@@ -60,27 +62,29 @@ const processPieChartData = () => {
     const plaza = item.plaza_id;
     const entradas = parseInt(item.entradas, 10);
 
+
     // Verificar si el plazaId coincide
     if (plaza === props.plazaId && fecha >= dateFormatStart && fecha <= dateFormatEnd) {
       // Crear una clave que combine la fecha y el id de la plaza
-      const key = fecha; // Usamos solo la fecha como clave
-      dailyData[key] = (dailyData[key] || 0) + entradas; // Acumular entradas por fecha
+      const key = `${fecha}-${plaza}`;
+      dailyData[key] = (dailyData[key] || 0) + entradas;
     }
   });
 
   // Preparar datos para el gráfico de pie
   const seriesData = Object.values(dailyData); // Total de entradas
-  const labelsData = Object.keys(dailyData); // Obtener solo las fechas
+  const labelsData = Object.keys(dailyData).map(key => key.split('-')[0]); // Obtener solo la fecha
 
   pieChartData.value = seriesData;
-  chartOptions.value.labels = labelsData; // Las etiquetas serán las fechas
+  chartOptions.value.labels = labelsData;
 
   // Para depurar, muestra los datos en consola
-  console.log('Series Data:', seriesData);
-  console.log('Labels Data:', labelsData);
+ // console.log('Series Data:', seriesData);
+ // console.log('Labels Data:', labelsData);
 };
 
 // Computar y observar el rango de fechas para procesar los datos
 watch(() => props.dateRange, processPieChartData, { immediate: true });
+watch(() => props.plazaId, processPieChartData, { immediate: true });
 </script>
 
