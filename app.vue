@@ -2,65 +2,131 @@
   <div>
     <div>
       <div class="m-6 rounded-lg shadow-lg max-w-64">
-        <label for="plaza-select">Selecciona una plaza: </label>
-        <select
-          id="plaza-select"
-          v-model="selectedPlazaId"
-          @change="processData"
-        >
-          <option v-for="plaza in availablePlazas" :key="plaza" :value="plaza">
-            Plaza {{ plaza }}
-          </option>
-        </select>
+        <div class="grid grid-flow-row grid-rows-3">
+                <!-- **[Nuevo] Botón para seleccionar todas las plazas** -->
+      <button 
+        :class="{ active: selectedPlazaIds.length === availablePlazas.length }"
+        class="row-span-1"
+        @click="togglePlazaSelection('all')"
+      >
+        Todas las Plazas
+      </button>
+      <button 
+        v-for="plaza in availablePlazas" 
+        :key="plaza" 
+        :class="{ active: selectedPlazaIds.includes(plaza) }"
+        class="row-span-1"
+        @click="togglePlazaSelection(plaza)"
+      >
+        Plaza {{ plaza }}
+      </button>
+
+
+    </div>
       </div>
       <div class="inline-flex rounded-md shadow-sm" role="group">
         <button
-          @click="setSelectionMode('day')"
+          @click="setPickerMode('day')"
           type="button"
           class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
         >
           Dia
         </button>
         <button
-          @click="setSelectionMode('week-picker')"
+          @click="setPickerMode('week')"
           type="button"
           class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
         >
           Semana
         </button>
         <button
-          @click="setSelectionMode('month')"
+          @click="setPickerMode('month')"
           type="button"
-          class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-e-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
+          class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
         >
           Mes
         </button>
+        <button
+          @click="setPickerMode('year')"
+          type="button"
+          class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-e-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
+        >
+          Year
+        </button>
       </div>
       <div class="flex my-6 mx-48 justify-end">
-        <VueDatePicker
+        <div v-if="pickerMode === 'day'">
+          <VueDatePicker
           v-model="selectedDate"
           range
-          week-picker
           multi-calendars
           :month-change-on-scroll="false"
           :enable-time-picker="false"
           class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+
+        </div>
+
+        <div v-else-if="pickerMode === 'week'">
+          <VueDatePicker
+          v-model="selectedDate"
+          range
+          multi-calendars
+          :week-picker="true"
+          :month-change-on-scroll="false"
+          :enable-time-picker="false"
+          class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        </div>
+
+        <div v-else-if="pickerMode === 'month'" >
+          <VueDatePicker
+          v-model="selectedDate"
+          range
+          :month-picker="true"
+          :month-change-on-scroll="false"
+          :enable-time-picker="false"
+          class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        </div>
+        
+        <div v-else-if="pickerMode === 'year'">
+          <VueDatePicker
+          v-model="selectedDate"
+          range
+          :year-picker="true"
+          :month-change-on-scroll="false"
+          :enable-time-picker="false"
+          class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        </div>
+
       </div>
     </div>
 
-    <div class="flex ml-36">
-      <ClientOnly>
+    <div class="flex justify-center items-center">
+      <ClientOnly class="">
         <VueApexCharts
           id="GrafLinea"
-          class="rounded-xl shadow-xl max-w-xl"
-          width="576"
+          class="rounded-xl shadow-xl max-w-5xl"
+          width="1024"
           type="line"
           :options="chartOptions"
           :series="chartSeries"
         />
+        
+      </ClientOnly>
+    </div>
+    <div class="grid grid-flow-col col-span-12">
+      <div class="col-span-6">
+
+      </div class="m-10 col-span-6 max-w-[576px]">
+      <ClientOnly >
         <Piechart :dateRange="selectedDate" :plazaId="selectedPlazaId" />
       </ClientOnly>
+      
+
     </div>
   </div>
 </template>
@@ -72,6 +138,14 @@ import VueDatePicker from "@vuepic/vue-datepicker"; // Importar el DatePicker
 import "@vuepic/vue-datepicker/dist/main.css";
 import jsonData from "./assets/agosto AV.json";
 import dayjs from "dayjs";
+
+// Modo del datepicker
+const pickerMode = ref("day");
+
+// Función para cambiar el modo del datepicker
+const setPickerMode = (mode) => {
+  pickerMode.value = mode;
+};
 
 // Función para calcular el rango de fechas por defecto
 const calculateDefaultDateRange = () => {
@@ -88,18 +162,27 @@ const calculateDefaultDateRange = () => {
 // Variable reactiva para almacenar el rango de fechas seleccionado
 const selectedDate = ref(calculateDefaultDateRange());
 
-const selectionMode = ref('day')
-
-// Función para actualizar el modo de selección
-const setSelectionMode = (mode) => {
-  selectionMode.value = mode;
-};
-
 // Obtener las plazas disponibles
 const availablePlazas = [
   ...new Set(jsonData.datos.map((item) => item.plaza_id)),
 ];
-const selectedPlazaId = ref(availablePlazas[0]);
+
+// Múltiples plazas seleccionables
+const selectedPlazaIds = ref([]); // Se pueden seleccionar múltiples plazas
+
+// Función para generar todas las fechas entre dos fechas
+const generateAllDatesInRange = (start, end) => {
+  let currentDate = dayjs(start);
+  const endDate = dayjs(end);
+  const allDates = [];
+
+  while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
+    allDates.push(currentDate.format('YYYY-MM-DD'));
+    currentDate = currentDate.add(1, 'day');
+  }
+
+  return allDates;
+};
 
 // Opciones de la gráfica
 const chartOptions = ref({
@@ -118,7 +201,7 @@ const chartOptions = ref({
     },
   },
   xaxis: {
-    categories: [],
+    categories: [], // Fechas que serán generadas
     labels: {
       formatter: (val) => dayjs(val).format("MM YYYY"),
     },
@@ -136,58 +219,84 @@ const chartOptions = ref({
 });
 
 // Serie de datos para la gráfica
-const chartSeries = ref([
-  {
-    name: "Entradas",
-    data: [],
-  },
-]);
+const chartSeries = ref([]); // Series vacías inicialmente
 
 // Función para procesar los datos y actualizar la gráfica
 const processData = () => {
   const [dateStart, dateEnd] = selectedDate.value;
 
-  if (!dateStart || !dateEnd) return;
+  if (!dateStart || !dateEnd || selectedPlazaIds.value.length === 0) return;
 
   const dateFormatStart = dayjs(dateStart).format("YYYY-MM-DD");
   const dateFormatEnd = dayjs(dateEnd).format("YYYY-MM-DD");
 
-  const fecha1 = dayjs(dateFormatStart);
-  const fecha2 = dayjs(dateFormatEnd);
-  const diffInDays = fecha2.diff(fecha1, "day");
+  // Generar todas las fechas dentro del rango seleccionado
+  const allDates = generateAllDatesInRange(dateFormatStart, dateFormatEnd);
 
-  // Filtrar los datos según el rango de fechas
-  const groupedData = jsonData.datos.reduce((acc, item) => {
-    if (
-      item.plaza_id == selectedPlazaId.value &&
-      item.fecha >= dateFormatStart &&
-      item.fecha <= dateFormatEnd
-    ) {
-      const dateString = item.fecha;
-      const entradas = parseInt(item.entradas, 10);
-      acc[dateString] = (acc[dateString] || 0) + entradas;
+  // Filtrar los datos dentro del rango seleccionado
+  const filteredData = jsonData.datos.filter(item => {
+    return item.fecha >= dateFormatStart && item.fecha <= dateFormatEnd;
+  });
+
+  const plazaData = {};
+
+  // Inicializar los datos con ceros para cada plaza
+  selectedPlazaIds.value.forEach(plazaId => {
+    plazaData[plazaId] = {};
+    allDates.forEach(date => {
+      plazaData[plazaId][date] = 0; // Cambios: Inicializa cada fecha con cero
+    });
+  });
+
+  // Rellenar los datos existentes
+  filteredData.forEach(item => {
+    const plaza = item.plaza_id;
+    const date = item.fecha;
+    const entradas = parseInt(item.entradas, 10);
+
+    if (selectedPlazaIds.value.includes(plaza)) {
+      plazaData[plaza][date] += entradas; // Cambios: Sumar entradas por fecha
     }
-    return acc;
-  }, {});
+  });
 
-  // Actualizar categorías (eje X) y datos de la serie
-  chartOptions.value.xaxis.categories = Object.keys(groupedData);
-  chartSeries.value[0].data = Object.values(groupedData);
-  chartSeries.value[0].name = `Entradas Plaza ${selectedPlazaId.value}`;
+  // Actualizar los datos de las series
+  chartOptions.value.xaxis.categories = allDates; // Fechas comunes
+  chartSeries.value = selectedPlazaIds.value.map(plazaId => ({
+    name: `Plaza ${plazaId}`,
+    data: allDates.map(date => plazaData[plazaId][date]), // Cambios: Mapear los datos por plaza y fecha
+  }));
 
-  // Actualizar el rango de fechas en la gráfica
-  chartOptions.value.xaxis.range = diffInDays;
-  chartOptions.value.markers.size = 7
+  // Manejar ceros en las gráficas para que empiecen en la misma fecha
+  chartSeries.value.forEach(series => {
+    const minVal = Math.min(...series.data);
+    series.data = series.data.map(value => (value === 0 ? null : value)); // Cambios: Cambiar ceros por null
+  });
 };
 
+// Función para manejar la selección de plazas
+const togglePlazaSelection = (plazaId) => {
+  if (plazaId === "all") {
+    // Seleccionar todas las plazas
+    if (selectedPlazaIds.value.length === availablePlazas.length) {
+      selectedPlazaIds.value = []; // Deseleccionar todas
+    } else {
+      selectedPlazaIds.value = [...availablePlazas]; // Seleccionar todas
+    }
+  } else {
+    // Alternar la selección de una plaza individual
+    if (selectedPlazaIds.value.includes(plazaId)) {
+      selectedPlazaIds.value = selectedPlazaIds.value.filter(id => id !== plazaId);
+    } else {
+      selectedPlazaIds.value.push(plazaId);
+    }
+  }
+};
 
+// Configurar `watch` para actualizar la gráfica
+watch([selectedDate, selectedPlazaIds], processData, { immediate: true });
 
-// Cuando el componente se monta, se calcula el rango de fechas por defecto
 onMounted(() => {
-  // selectedDate.value = calculateDefaultDateRange();
-  chartOptions.value.markers.size = 0;
+  chartOptions.value.markers.size = 0
+  processData(); // Procesar datos en el montaje inicial
 });
-
-// Configurar el `watch` para que llame a `processData` cuando cambie `selectedDate`
-watch(selectedDate, processData);
 </script>

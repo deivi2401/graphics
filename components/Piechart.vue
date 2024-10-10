@@ -2,20 +2,18 @@
   <div>
     <!-- Componente de gráfica de pie -->
     <VueApexCharts
-    v-if="pieChartData.length"
       type="pie" 
       :options="chartOptions" 
-      :series="pieChartData"
+      :series="chartSeries"
       width="576"
     />
-    <p v-else>No hay datos disponibles para el rango de fechas seleccionado.</p>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, defineProps } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
-import jsonData from './assets/agosto AV.json'; // Asegúrate de que esta ruta es correcta
+import jsonData from '~/assets/agosto AV.json' 
 import dayjs from 'dayjs';
 
 // Definir las props
@@ -40,51 +38,51 @@ const chartOptions = ref({
     },
   },
   labels: [], // Se llenará con las fechas
+  legend: {
+    show: false, // Oculta los labels al lado de la gráfica
+  }, 
 });
 
 // Datos para el gráfico de pie
-const pieChartData = ref([]);
+const chartSeries = ref([]); // Datos (sumas de entradas) para el gráfico
 
-// Función para procesar los datos según el rango de fechas
-const processPieChartData = () => {
-  const [dateStart, dateEnd] = props.dateRange;
+// Función para procesar los datos
+const processData = () => {
+  const [dateStart, dateEnd] = props.dateRange
 
   if (!dateStart || !dateEnd) return;
 
+  // Formato de fechas para filtrar
   const dateFormatStart = dayjs(dateStart).format('YYYY-MM-DD');
   const dateFormatEnd = dayjs(dateEnd).format('YYYY-MM-DD');
 
-  const dailyData = {};
-
   // Filtrar los datos según el rango de fechas
-  jsonData.datos.forEach((item) => {
-    const fecha = item.fecha; // Asegúrate de que este formato sea correcto
-    const plaza = item.plaza_id;
-    const entradas = parseInt(item.entradas, 10);
-
-
-    // Verificar si el plazaId coincide
-    if (plaza === props.plazaId && fecha >= dateFormatStart && fecha <= dateFormatEnd) {
-      // Crear una clave que combine la fecha y el id de la plaza
-      const key = `${fecha}-${plaza}`;
-      dailyData[key] = (dailyData[key] || 0) + entradas;
-    }
+  const filteredData = jsonData.datos.filter(item => {
+    return item.fecha >= dateFormatStart && item.fecha <= dateFormatEnd;
   });
 
-  // Preparar datos para el gráfico de pie
-  const seriesData = Object.values(dailyData); // Total de entradas
-  const labelsData = Object.keys(dailyData).map(key => key.split('-')[0]); // Obtener solo la fecha
+  // Agrupar los datos por plaza y sumar las entradas
+  const groupedData = filteredData.reduce((acc, item) => {
+    if (!acc[item.plaza_id]) {
+      acc[item.plaza_id] = 0;
+    }
+    acc[item.plaza_id] += parseInt(item.entradas, 10); // Sumar las entradas por plaza
+  
+    return acc;
+  }, {});
 
-  pieChartData.value = seriesData;
-  chartOptions.value.labels = labelsData;
-
-  // Para depurar, muestra los datos en consola
- // console.log('Series Data:', seriesData);
- // console.log('Labels Data:', labelsData);
+  console.log(groupedData)
+  // Actualizar las etiquetas (nombres de plazas) y los datos (sumas de entradas)
+  chartOptions.value.labels = Object.keys(groupedData); // Plazas
+  chartSeries.value = Object.values(groupedData); // Sumas de entradas por plaza
 };
 
-// Computar y observar el rango de fechas para procesar los datos
-watch(() => props.dateRange, processPieChartData, { immediate: true });
-watch(() => props.plazaId, processPieChartData, { immediate: true });
+// Vigilar el cambio de fechas para actualizar la gráfica de pie
+watch(() => props.dateRange, processData, { immediate: true });
+
+onMounted(() => {
+  processData();
+});
+
 </script>
 
