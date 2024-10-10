@@ -23,7 +23,7 @@ const props = defineProps({
     default: () => [null, null],
   },
   plazaId: {
-    type: Number,
+    type: Array,
     required: true,
   },
 });
@@ -48,7 +48,33 @@ const chartSeries = ref([]); // Datos (sumas de entradas) para el gráfico
 
 // Función para procesar los datos
 const processData = () => {
-  const [dateStart, dateEnd] = props.dateRange
+  const [dateStart, dateEnd] = props.dateRange;
+
+  if (!dateStart || !dateEnd || props.plazaId.length === 0) return;
+
+  const dateFormatStart = dayjs(dateStart).format("YYYY-MM-DD");
+  const dateFormatEnd = dayjs(dateEnd).format("YYYY-MM-DD");
+
+  const filteredData = jsonData.datos.filter(item => {
+    return (
+      item.fecha >= dateFormatStart &&
+      item.fecha <= dateFormatEnd &&
+      props.plazaId.includes(item.plaza_id)
+    );
+  });
+
+  const plazaSums = props.plazaId.reduce((acc, plazaId) => {
+    acc[plazaId] = 0;
+    return acc;
+  }, {});
+
+  filteredData.forEach(item => {
+    plazaSums[item.plaza_id] += parseInt(item.entradas, 10);
+  });
+
+  chartOptions.value.labels = Object.keys(plazaSums).map(plazaId => `Plaza ${plazaId}`);
+  chartSeries.value = Object.values(plazaSums);
+  /* const [dateStart, dateEnd] = props.dateRange
 
   if (!dateStart || !dateEnd) return;
 
@@ -58,8 +84,9 @@ const processData = () => {
 
   // Filtrar los datos según el rango de fechas
   const filteredData = jsonData.datos.filter(item => {
-    return item.fecha >= dateFormatStart && item.fecha <= dateFormatEnd;
+    return item.fecha >= dateFormatStart && item.fecha <= dateFormatEnd && props.plazaId.includes(item.plaza_id);
   });
+
 
   // Agrupar los datos por plaza y sumar las entradas
   const groupedData = filteredData.reduce((acc, item) => {
@@ -71,14 +98,13 @@ const processData = () => {
     return acc;
   }, {});
 
-  console.log(groupedData)
   // Actualizar las etiquetas (nombres de plazas) y los datos (sumas de entradas)
   chartOptions.value.labels = Object.keys(groupedData); // Plazas
-  chartSeries.value = Object.values(groupedData); // Sumas de entradas por plaza
+  chartSeries.value = Object.values(groupedData); // Sumas de entradas por plaza */
 };
 
 // Vigilar el cambio de fechas para actualizar la gráfica de pie
-watch(() => props.dateRange, processData, { immediate: true });
+watch([() => props.selectedPlazas, () => props.dateRange], processData, { immediate: true });
 
 onMounted(() => {
   processData();

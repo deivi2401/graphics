@@ -5,5 +5,10 @@ export default defineNuxtConfig({
     preference: 'light'
   },
   devtools: { enabled: true },
+/*   dayjs: {
+    locales: ['es'],
+    plugins: ['advancedFormat', 'weekOfYear', 'isoWeek', 'weekday', 'utc', 'isBetween', 'isSameOrBefore', 'updateLocale'],
+    defaultLocale: 'es',
+  }, */
   modules: ['@nuxt/ui','@pinia/nuxt',"@pinia-plugin-persistedstate/nuxt"]
 })

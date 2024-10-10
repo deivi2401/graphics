@@ -2,25 +2,27 @@
   <div>
     <div>
       <div class="m-6 rounded-lg shadow-lg max-w-64">
-        <div class="grid grid-flow-row grid-rows-3">
-                <!-- **[Nuevo] Botón para seleccionar todas las plazas** -->
-      <button 
-        :class="{ active: selectedPlazaIds.length === availablePlazas.length }"
-        class="row-span-1"
-        @click="togglePlazaSelection('all')"
-      >
+        <div class="grid grid-flow-row grid-rows-2">
+          <!-- <label>
+        <input 
+          type="checkbox" 
+          :checked="selectedPlazaIds.length === availablePlazas.length" 
+          @change="selectedPlazaIds = $event.target.checked ? [...availablePlazas] : []"
+        />
         Todas las Plazas
-      </button>
-      <button 
-        v-for="plaza in availablePlazas" 
-        :key="plaza" 
-        :class="{ active: selectedPlazaIds.includes(plaza) }"
-        class="row-span-1"
-        @click="togglePlazaSelection(plaza)"
-      >
+      </label> -->
+              
+          <label v-for="plaza in availablePlazas" :key="plaza">
+        <input 
+          type="checkbox" 
+          :value="plaza" 
+          v-model="selectedPlazaIds" 
+        />
         Plaza {{ plaza }}
-      </button>
+      </label>
 
+      <!-- Checkbox para seleccionar todas las plazas -->
+ 
 
     </div>
       </div>
@@ -107,13 +109,10 @@
 
     <div class="flex justify-center items-center">
       <ClientOnly class="">
-        <VueApexCharts
-          id="GrafLinea"
-          class="rounded-xl shadow-xl max-w-5xl"
-          width="1024"
-          type="line"
-          :options="chartOptions"
-          :series="chartSeries"
+        <GraficaLinea
+        :labels="processedLabels"
+      :datasets="processedDatasets"
+      title="Entradas por Plaza"
         />
         
       </ClientOnly>
@@ -123,7 +122,7 @@
 
       </div class="m-10 col-span-6 max-w-[576px]">
       <ClientOnly >
-        <Piechart :dateRange="selectedDate" :plazaId="selectedPlazaId" />
+        <Piechart :dateRange="selectedDate" :plazaId="selectedPlazaIds" />
       </ClientOnly>
       
 
@@ -132,12 +131,95 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, computed } from 'vue';
+import VueDatePicker from '@vuepic/vue-datepicker';
+import dayjs from 'dayjs';
+import jsonData from '~/assets/agosto AV.json';
+
+// Modo del datepicker
+const pickerMode = ref("day");
+
+// Función para cambiar el modo del datepicker
+const setPickerMode = (mode) => {
+  pickerMode.value = mode;
+};
+
+// *** Procesamiento de datos ***
+
+// Variables reactivas para almacenar el rango de fechas seleccionado
+const selectedDate = ref([null, null]);
+
+// Obtener las plazas disponibles
+const availablePlazas = [
+  ...new Set(jsonData.datos.map((item) => item.plaza_id)),
+];
+
+// Variable reactiva para las plazas seleccionadas
+const selectedPlazas = ref([]);
+
+// ** Procesamiento de los datos basado en el rango de fechas y plazas seleccionadas **
+const processData = () => {
+  const [dateStart, dateEnd] = selectedDate.value;
+
+  if (!dateStart || !dateEnd) return { labels: [], datasets: [] };
+
+  const dateFormatStart = dayjs(dateStart).format('YYYY-MM-DD');
+  const dateFormatEnd = dayjs(dateEnd).format('YYYY-MM-DD');
+
+  // Filtrar los datos según el rango de fechas y plazas seleccionadas
+  const groupedData = jsonData.datos.reduce((acc, item) => {
+    if (
+      selectedPlazas.value.includes(item.plaza_id) &&
+      item.fecha >= dateFormatStart &&
+      item.fecha <= dateFormatEnd
+    ) {
+      const dateString = item.fecha;
+      const entradas = parseInt(item.entradas, 10);
+
+      if (!acc[dateString]) {
+        acc[dateString] = {};
+      }
+      if (!acc[dateString][item.plaza_id]) {
+        acc[dateString][item.plaza_id] = 0;
+      }
+      acc[dateString][item.plaza_id] += entradas;
+    }
+    return acc;
+  }, {});
+
+  const labels = Object.keys(groupedData).sort(); // Las fechas (labels) ordenadas
+  const datasets = selectedPlazas.value.map((plaza) => ({
+    label: `Plaza ${plaza}`,
+    data: labels.map((date) => groupedData[date][plaza] || 0), // Obtener las entradas o 0 si no hay datos
+    backgroundColor: plaza === 1 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)',
+    borderColor: plaza === 1 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)',
+    borderWidth: 2,
+    fill: false,
+    tension: 0.4,
+  }));
+
+  return { labels, datasets };
+};
+
+// ** Variables calculadas para los datos de la gráfica **
+const processedLabels = ref([]);
+const processedDatasets = ref([]);
+
+// ** Watch para actualizar los datos cuando cambie la fecha o las plazas seleccionadas **
+watch([selectedDate, selectedPlazas], () => {
+  const { labels, datasets } = processData();
+  processedLabels.value = labels;
+  processedDatasets.value = datasets;
+});
+
+
+/* import { ref, watch, onMounted } from "vue";
 import VueApexCharts from "vue3-apexcharts";
 import VueDatePicker from "@vuepic/vue-datepicker"; // Importar el DatePicker
 import "@vuepic/vue-datepicker/dist/main.css";
 import jsonData from "./assets/agosto AV.json";
 import dayjs from "dayjs";
+
 
 // Modo del datepicker
 const pickerMode = ref("day");
@@ -168,7 +250,7 @@ const availablePlazas = [
 ];
 
 // Múltiples plazas seleccionables
-const selectedPlazaIds = ref([]); // Se pueden seleccionar múltiples plazas
+const selectedPlazaIds = ref([0]); // Se pueden seleccionar múltiples plazas
 
 // Función para generar todas las fechas entre dos fechas
 const generateAllDatesInRange = (start, end) => {
@@ -182,6 +264,17 @@ const generateAllDatesInRange = (start, end) => {
   }
 
   return allDates;
+};
+
+// Función para formatear la fecha según el modo seleccionado
+const formatDateBasedOnPickerMode = (date) => {
+  if (pickerMode.value === 'day') {
+    return dayjs(date).format('DD-MM-YYYY'); // Formato para día
+  } else if (pickerMode.value === 'month') {
+    return dayjs(date).format('MM-YYYY'); // Formato para mes
+  } else if (pickerMode.value === 'week') {
+    return `Semana ${dayjs(date).week()} del ${dayjs(date).year()}`; // Formato para semana
+  }
 };
 
 // Opciones de la gráfica
@@ -203,7 +296,7 @@ const chartOptions = ref({
   xaxis: {
     categories: [], // Fechas que serán generadas
     labels: {
-      formatter: (val) => dayjs(val).format("MM YYYY"),
+      formatter: (val) => formatDateBasedOnPickerMode(val),
     },
   },
   stroke: {
@@ -259,11 +352,11 @@ const processData = () => {
     }
   });
 
-  // Actualizar los datos de las series
-  chartOptions.value.xaxis.categories = allDates; // Fechas comunes
+  // Actualiza las categorías y datos de la gráfica
+  chartOptions.value.xaxis.categories = allDates.map(date => formatDateBasedOnPickerMode(date)); // *** Se utiliza el formateo al actualizar las categorías ***
   chartSeries.value = selectedPlazaIds.value.map(plazaId => ({
     name: `Plaza ${plazaId}`,
-    data: allDates.map(date => plazaData[plazaId][date]), // Cambios: Mapear los datos por plaza y fecha
+    data: allDates.map(date => plazaData[plazaId][date]),// Cambios: Mapear los datos por plaza y fecha
   }));
 
   // Manejar ceros en las gráficas para que empiecen en la misma fecha
@@ -273,30 +366,12 @@ const processData = () => {
   });
 };
 
-// Función para manejar la selección de plazas
-const togglePlazaSelection = (plazaId) => {
-  if (plazaId === "all") {
-    // Seleccionar todas las plazas
-    if (selectedPlazaIds.value.length === availablePlazas.length) {
-      selectedPlazaIds.value = []; // Deseleccionar todas
-    } else {
-      selectedPlazaIds.value = [...availablePlazas]; // Seleccionar todas
-    }
-  } else {
-    // Alternar la selección de una plaza individual
-    if (selectedPlazaIds.value.includes(plazaId)) {
-      selectedPlazaIds.value = selectedPlazaIds.value.filter(id => id !== plazaId);
-    } else {
-      selectedPlazaIds.value.push(plazaId);
-    }
-  }
-};
 
 // Configurar `watch` para actualizar la gráfica
-watch([selectedDate, selectedPlazaIds], processData, { immediate: true });
+watch([selectedDate, selectedPlazaIds, pickerMode], processData, { immediate: true });
 
 onMounted(() => {
   chartOptions.value.markers.size = 0
   processData(); // Procesar datos en el montaje inicial
-});
+}); */
 </script>
