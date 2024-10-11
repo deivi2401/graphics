@@ -1,80 +1,77 @@
 <template>
-  <div>
-    <!-- Gráfica de líneas con Chart.js -->
-    <Line :data="chartData" :options="chartOptions" />
-  </div>
+  <canvas ref="lineChart"></canvas>
 </template>
 
 <script setup>
-import { Line } from "vue-chartjs";
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  LineElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-} from "chart.js";
-import { computed, ref, watch } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { Chart, registerables } from 'chart.js';
 
-// *** Registra los componentes de Chart.js ***
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
+Chart.register(...registerables); // Registrar todos los componentes de Chart.js
 
-// *** Props que se reciben del componente padre ***
 const props = defineProps({
   labels: {
     type: Array,
-    default: () => [],
+    required: true
   },
-  datasets: {
+  data: {
     type: Array,
-    default: () => [],
-  },
-  title: {
-    type: String,
-    default: "Entradas por Día",
+    required: true
   }
 });
 
-// *** Configuración de opciones de la gráfica ***
-const chartOptions = ref({
-  responsive: true,
-  plugins: {
-    legend: {
-      display: true,
+const lineChart = ref(null);
+let chartInstance = null;
+
+// Función para crear la gráfica
+const createChart = () => {
+  // Destruir la instancia anterior si existe
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  if (!lineChart.value) return; // Asegurarse de que el elemento existe
+
+  const ctx = lineChart.value.getContext('2d');
+  
+  // Crear una nueva instancia del gráfico
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: props.labels,
+      datasets: props.data
     },
-    title: {
-      display: true,
-      text: props.title,
-    },
-  },
-  scales: {
-    x: {
-      type: 'category',
-      title: {
-        display: true,
-        text: 'Fechas',
-      },
-    },
-    y: {
-      title: {
-        display: true,
-        text: 'Entradas',
-      },
-      beginAtZero: true,
-    },
-  },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Fechas'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Entradas'
+          },
+          beginAtZero: true // Asegúrate de que el eje Y comience en cero
+        }
+      }
+    }
+  });
+};
+
+// Reaccionar a los cambios en las props para actualizar la gráfica
+watch(() => [props.labels, props.data], createChart, { immediate: true });
+
+onMounted(() => {
+  createChart(); // Crear la gráfica cuando el componente se monta
 });
 
-// *** Estructura de los datos de la gráfica ***
-const chartData = computed(() => ({
-  labels: props.labels,
-  datasets: props.datasets,
-}));
+// Limpieza al destruir el componente
+onBeforeUnmount(() => {
+  if (chartInstance) {
+    chartInstance.destroy(); // Destruir el gráfico al desmontar el componente
+  }
+});
 </script>
-
-<style scoped>
-/* Opcional: Estilos para el componente */
-</style>
