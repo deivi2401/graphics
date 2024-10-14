@@ -12,16 +12,19 @@
 
 <script setup>
 import { ref, watch, defineProps } from 'vue';
+import { useDateStore } from '~/stores/dateStore.js';
 import VueApexCharts from 'vue3-apexcharts';
 import jsonData from '~/assets/agosto AV.json' 
 import dayjs from 'dayjs';
 
+const dateStore = useDateStore()
+
 // Definir las props
 const props = defineProps({
-  dateRange: {
+  /* dateRange: {
     type: Array,
     default: () => [null, null],
-  },
+  }, */
   plazaId: {
     type: Array,
     required: true,
@@ -48,7 +51,8 @@ const chartSeries = ref([]); // Datos (sumas de entradas) para el gráfico
 
 // Función para procesar los datos
 const processData = () => {
-  const [dateStart, dateEnd] = props.dateRange;
+  const dateStart = dateStore.selectedDateRange[0]
+  const dateEnd = dateStore.selectedDateRange[1]
 
   if (!dateStart || !dateEnd || props.plazaId.length === 0) return;
 
@@ -104,7 +108,7 @@ const processData = () => {
 };
 
 // Vigilar el cambio de fechas para actualizar la gráfica de pie
-watch([() => props.selectedPlazas, () => props.dateRange], processData, { immediate: true });
+watch([() => props.selectedPlazas, () => dateStore.selectedDateRange], processData, { immediate: true });
 
 onMounted(() => {
   processData();

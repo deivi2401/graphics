@@ -133,6 +133,9 @@ import dayjs from 'dayjs';
 import jsonData from "~/assets/agosto AV.json"; // Tu JSON de datos
 import VueDatePicker from "@vuepic/vue-datepicker"; // Importar el DatePicker
 import "@vuepic/vue-datepicker/dist/main.css";
+import { useDateStore } from '~/stores/dateStore.js';
+
+const dateStore = useDateStore()
 
 // Función para calcular el rango de fechas por defecto
 const calculateDefaultDateRange = () => {
@@ -166,7 +169,7 @@ watch(selectedPlazaIds, (newVal) => {
 
 // Configuración de datepicker
 const pickerMode = ref("day");
-const selectedDate = ref(['2012-10-15'],['2012-11-05']);
+const selectedDate = ref(dateStore.selectedDateRange)
 
 const setPickerMode = (mode) => pickerMode.value = mode;
 
@@ -207,11 +210,13 @@ const getRandomColor = () => {
 
 // Función para procesar los datos
 const processData = () => {
-  const [dateStart, dateEnd] = selectedDate.value;
+  const dateStart = dateStore.selectedDateRange[0]
+  const dateEnd = dateStore.selectedDateRange[1]
 
   if (!dateStart || !dateEnd || selectedPlazaIds.value.length === 0) return;
 
   const dateFormatStart = dayjs(dateStart).format("YYYY-MM-DD");
+  console.log(dateFormatStart)
   const dateFormatEnd = dayjs(dateEnd).format("YYYY-MM-DD");
 
   const allDates = generateAllDatesInRange(dateFormatStart, dateFormatEnd);
@@ -251,6 +256,10 @@ const processData = () => {
 
 // Watch para procesar los datos al cambiar fechas, plazas o el modo de fecha
 watch([selectedDate, selectedPlazaIds, pickerMode], processData, { immediate: true });
+watch(selectedDate, (newRange) => {
+  dateStore.updateDateRange(newRange); // Actualizar el rango de fechas en la store
+}, { immediate: true });
+watch(() => dateStore.selectedDateRange, processData, { immediate: true });
 
 onMounted(() => {
   processData(); // Procesar datos al montar el componente
