@@ -166,7 +166,7 @@ watch(selectedPlazaIds, (newVal) => {
 
 // Configuración de datepicker
 const pickerMode = ref("day");
-const selectedDate = ref(calculateDefaultDateRange());
+const selectedDate = ref(['2012-10-15'],['2012-11-05']);
 
 const setPickerMode = (mode) => pickerMode.value = mode;
 

@@ -42,6 +42,15 @@ const createChart = () => {
     },
     options: {
       responsive: true,
+      animations: {
+      tension: {
+        duration: 1000,
+        easing: 'linear',
+        from: 0,
+        to: 0.5,
+        loop: false
+      }
+    },
       scales: {
         x: {
           title: {
