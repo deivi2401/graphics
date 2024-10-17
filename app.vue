@@ -72,9 +72,9 @@
           v-model="selectedDate"
           range
           multi-calendars
-          :week-picker="true"
           :month-change-on-scroll="false"
           :enable-time-picker="false"
+          @update:model-value="adjustWeekRange"
           class="p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         </div>
@@ -133,7 +133,15 @@ import dayjs from 'dayjs';
 import jsonData from "~/assets/agosto AV.json"; // Tu JSON de datos
 import VueDatePicker from "@vuepic/vue-datepicker"; // Importar el DatePicker
 import "@vuepic/vue-datepicker/dist/main.css";
+import AdvancedFormat from 'dayjs/plugin/advancedFormat'
+import weekOfYear from 'dayjs/plugin/weekOfYear'
 import { useDateStore } from '~/stores/dateStore.js';
+import isoWeek from 'dayjs/plugin/isoWeek'
+
+dayjs.extend(AdvancedFormat)
+dayjs.extend(weekOfYear);
+dayjs.locale('es')
+dayjs.extend(isoWeek)
 
 const dateStore = useDateStore()
 
@@ -143,6 +151,59 @@ const calculateDefaultDateRange = () => {
   const minDate = dayjs(Math.min(...allDates.map((date) => new Date(date).getTime()))).format("YYYY-MM-DD");
   const maxDate = dayjs(Math.max(...allDates.map((date) => new Date(date).getTime()))).format("YYYY-MM-DD");
   return [minDate, maxDate];
+};
+
+// Función para ajustar el rango de fechas seleccionado al inicio y final de la semana
+const adjustWeekRange = (range) => {
+  if (range.length === 2) {
+    const startDate = dayjs(range[0]).startOf('week').toDate();  // Ajusta al inicio de la semana
+    const endDate = dayjs(range[1]).endOf('week').toDate();      // Ajusta al final de la semana
+
+    // Actualizar el rango seleccionado en la interfaz de usuario y la store
+    selectedDate.value = [startDate, endDate];
+    dateStore.updateDateRange([startDate, endDate]);
+  }
+};
+
+// Función para generar meses entre dos fechas
+const generateAllMonthsInRange = (start, end) => {
+  let currentDate = dayjs(start).startOf('month');
+  const endDate = dayjs(end).endOf('month');
+  const allMonths = [];
+
+  while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'month')) {
+    allMonths.push(currentDate.format('YYYY-MM')); // Guardar los meses
+    currentDate = currentDate.add(1, 'month');
+  }
+
+  return allMonths;
+};
+
+// Función para generar años entre dos fechas
+const generateAllYearsInRange = (start, end) => {
+  let currentDate = dayjs(start).startOf('year');
+  const endDate = dayjs(end).endOf('year');
+  const allYears = [];
+
+  while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'year')) {
+    allYears.push(currentDate.format('YYYY')); // Guardar los años
+    currentDate = currentDate.add(1, 'year');
+  }
+
+  return allYears;
+};
+
+const generateAllWeeksInRange = (start, end) => {
+  let currentWeek = dayjs(start).startOf('week');
+  const endWeek = dayjs(end).endOf('week');
+  const allWeeks = [];
+
+  while (currentWeek.isBefore(endWeek) || currentWeek.isSame(endWeek, 'week')) {
+    allWeeks.push(currentWeek.format('YYYY-WW'));
+    currentWeek = currentWeek.add(1, 'week');
+  }
+
+  return allWeeks;
 };
 
 // Estado de plazas seleccionadas
@@ -192,13 +253,18 @@ const generateAllDatesInRange = (start, end) => {
 // Función para formatear la fecha según el modo seleccionado
 const formatDateBasedOnPickerMode = (date) => {
   if (pickerMode.value === 'day') {
-    return dayjs(date).format('DD-MM-YYYY');
+    return dayjs(date).format('DD-MM-YYYY'); // Formato para día
   } else if (pickerMode.value === 'month') {
-    return dayjs(date).format('MM-YYYY');
+    return dayjs(date).format('MM-YYYY'); // Formato para mes
+  } else if (pickerMode.value === 'year') {
+    return dayjs(date).format('YYYY'); // Formato para año
   } else if (pickerMode.value === 'week') {
-    return `Semana ${dayjs(date).week()} del ${dayjs(date).year()}`;
+    const weekNumber = dayjs(date).week();
+    const year = dayjs(date).year();
+    return `Semana ${weekNumber} del ${year}`; // Formato para semana
   }
 };
+
 const getRandomColor = () => {
   const letters = '0123456789ABCDEF';
   let color = '#';
@@ -210,40 +276,72 @@ const getRandomColor = () => {
 
 // Función para procesar los datos
 const processData = () => {
-  const dateStart = dateStore.selectedDateRange[0]
-  const dateEnd = dateStore.selectedDateRange[1]
+  const dateStart = dateStore.selectedDateRange[0];
+  const dateEnd = dateStore.selectedDateRange[1];
 
   if (!dateStart || !dateEnd || selectedPlazaIds.value.length === 0) return;
 
-  const dateFormatStart = dayjs(dateStart).format("YYYY-MM-DD");
-  console.log(dateFormatStart)
-  const dateFormatEnd = dayjs(dateEnd).format("YYYY-MM-DD");
+  let allDates = [];
+  let dateFormatStart, dateFormatEnd;
 
-  const allDates = generateAllDatesInRange(dateFormatStart, dateFormatEnd);
+  // Dependiendo del pickerMode, genera las fechas
+  if (pickerMode.value === 'day') {
+    dateFormatStart = dayjs(dateStart).format("YYYY-MM-DD");
+    dateFormatEnd = dayjs(dateEnd).format("YYYY-MM-DD");
+    allDates = generateAllDatesInRange(dateFormatStart, dateFormatEnd);
+  } else if (pickerMode.value === 'month') {
+    dateFormatStart = dayjs(dateStart).startOf('month').format("YYYY-MM");
+    dateFormatEnd = dayjs(dateEnd).endOf('month').format("YYYY-MM");
+    allDates = generateAllMonthsInRange(dateFormatStart, dateFormatEnd);
+  } else if (pickerMode.value === 'year') {
+    dateFormatStart = dayjs(dateStart).startOf('year').format("YYYY");
+    dateFormatEnd = dayjs(dateEnd).endOf('year').format("YYYY");
+    allDates = generateAllYearsInRange(dateFormatStart, dateFormatEnd);
+  } else if (pickerMode.value === 'week') {
+    // Para la semana, obtenemos las semanas completas
+    dateFormatStart = dayjs(dateStart).startOf('week').format("YYYY-WW");
+    dateFormatEnd = dayjs(dateEnd).endOf('week').format("YYYY-WW");
+    allDates = generateAllWeeksInRange(dateFormatStart, dateFormatEnd);
+  }
 
+  // Filtra los datos dentro del rango
   const filteredData = jsonData.datos.filter(item => {
-    return item.fecha >= dateFormatStart && item.fecha <= dateFormatEnd;
+    const itemDate = dayjs(item.fecha).format(
+      pickerMode.value === 'day' ? 'YYYY-MM-DD' : 
+      pickerMode.value === 'month' ? 'YYYY-MM' : 
+      pickerMode.value === 'year' ? 'YYYY' : 
+      'YYYY-WW'
+    );
+    return itemDate >= dateFormatStart && itemDate <= dateFormatEnd;
   });
 
   const plazaData = {};
   selectedPlazaIds.value.forEach(plazaId => {
     plazaData[plazaId] = {};
     allDates.forEach(date => {
-      plazaData[plazaId][date] = 0;
+      plazaData[plazaId][date] = 0;  // Inicializa con cero
     });
   });
 
+  // Rellena los datos existentes
   filteredData.forEach(item => {
     const plaza = item.plaza_id;
-    const date = item.fecha;
+    const date = dayjs(item.fecha).format(
+      pickerMode.value === 'day' ? 'YYYY-MM-DD' : 
+      pickerMode.value === 'month' ? 'YYYY-MM' : 
+      pickerMode.value === 'year' ? 'YYYY' : 
+      'YYYY-WW'
+    );
     const entradas = parseInt(item.entradas, 10);
     if (selectedPlazaIds.value.includes(plaza)) {
-      plazaData[plaza][date] += entradas;
+      plazaData[plaza][date] += entradas;  // Sumar las entradas por fecha
     }
   });
 
+  // Actualiza los labels de la gráfica
   chartLabels.value = allDates.map(date => formatDateBasedOnPickerMode(date));
 
+  // Actualiza los datos de la gráfica
   chartData.value = selectedPlazaIds.value.map(plazaId => ({
     label: `Plaza ${plazaId}`,
     data: allDates.map(date => plazaData[plazaId][date]),
