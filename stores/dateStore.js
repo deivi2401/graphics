@@ -4,8 +4,8 @@ export const useDateStore = defineStore('dateStore', {
   // Definimos el estado con state
   state: () => ({
     selectedDateRange: {
-      start: new Date(),
-      end: new Date()
+      start: "", //new Date()
+      end: "" //new Date()
     }
   }),
   

@@ -105,6 +105,17 @@
       </div>
     </div>
 
+
+    <div>
+      <button
+          @click="handleErase"
+          type="button"
+          class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
+        >
+          Borrar Fechas
+        </button>
+    </div>
+
     <div class="flex justify-center items-center">
         <GraficaLinea
         :labels="chartLabels"
@@ -138,12 +149,19 @@ import weekOfYear from 'dayjs/plugin/weekOfYear'
 import { useDateStore } from '~/stores/dateStore.js';
 import isoWeek from 'dayjs/plugin/isoWeek'
 
+
 dayjs.extend(AdvancedFormat)
 dayjs.extend(weekOfYear);
 dayjs.locale('es')
 dayjs.extend(isoWeek)
 
 const dateStore = useDateStore()
+
+
+
+const BorrarFechas = () => {
+    dateStore.$reset()
+}
 
 // Función para calcular el rango de fechas por defecto
 const calculateDefaultDateRange = () => {
@@ -156,8 +174,8 @@ const calculateDefaultDateRange = () => {
 // Función para ajustar el rango de fechas seleccionado al inicio y final de la semana
 const adjustWeekRange = (range) => {
   if (range.length === 2) {
-    const startDate = dayjs(range[0]).startOf('week').toDate();  // Ajusta al inicio de la semana
-    const endDate = dayjs(range[1]).endOf('week').toDate();      // Ajusta al final de la semana
+    const startDate = dayjs(range[0]).startOf('isoWeek').toDate();  // Ajusta al inicio de la semana
+    const endDate = dayjs(range[1]).endOf('isoWeek').toDate();      // Ajusta al final de la semana
 
     // Actualizar el rango seleccionado en la interfaz de usuario y la store
     selectedDate.value = [startDate, endDate];
@@ -194,12 +212,12 @@ const generateAllYearsInRange = (start, end) => {
 };
 
 const generateAllWeeksInRange = (start, end) => {
-  let currentWeek = dayjs(start).startOf('week');
-  const endWeek = dayjs(end).endOf('week');
+  let currentWeek = dayjs(start).startOf('isoWeek');
+  const endWeek = dayjs(end).endOf('isoWeek');
   const allWeeks = [];
-
-  while (currentWeek.isBefore(endWeek) || currentWeek.isSame(endWeek, 'week')) {
-    allWeeks.push(currentWeek.format('YYYY-WW'));
+  
+  while (currentWeek.isBefore(endWeek) || currentWeek.isSame(endWeek, 'isoWeek')) {
+    allWeeks.push(currentWeek.format('YYYY-MM-DD')); // Usar el formato de inicio de semana
     currentWeek = currentWeek.add(1, 'week');
   }
 
@@ -254,14 +272,14 @@ const generateAllDatesInRange = (start, end) => {
 const formatDateBasedOnPickerMode = (date) => {
   if (pickerMode.value === 'day') {
     return dayjs(date).format('DD-MM-YYYY'); // Formato para día
+  } else if (pickerMode.value === 'week') {
+    const weekStart = dayjs(date).startOf('isoWeek').format('YYYY-WW');
+    const weekEnd = dayjs(date).endOf('isoWeek').format('YYYY-WW');
+    return weekStart; // Formato para semana, mostrando el rango
   } else if (pickerMode.value === 'month') {
     return dayjs(date).format('MM-YYYY'); // Formato para mes
   } else if (pickerMode.value === 'year') {
     return dayjs(date).format('YYYY'); // Formato para año
-  } else if (pickerMode.value === 'week') {
-    const weekNumber = dayjs(date).week();
-    const year = dayjs(date).year();
-    return `Semana ${weekNumber} del ${year}`; // Formato para semana
   }
 };
 
@@ -289,6 +307,10 @@ const processData = () => {
     dateFormatStart = dayjs(dateStart).format("YYYY-MM-DD");
     dateFormatEnd = dayjs(dateEnd).format("YYYY-MM-DD");
     allDates = generateAllDatesInRange(dateFormatStart, dateFormatEnd);
+  } else if (pickerMode.value === 'week') {
+    dateFormatStart = dayjs(dateStart).startOf('isoWeek').format("YYYY-WW");
+    dateFormatEnd = dayjs(dateEnd).endOf('isoWeek').format("YYYY-WW");
+    allDates = generateAllWeeksInRange(dateFormatStart, dateFormatEnd);
   } else if (pickerMode.value === 'month') {
     dateFormatStart = dayjs(dateStart).startOf('month').format("YYYY-MM");
     dateFormatEnd = dayjs(dateEnd).endOf('month').format("YYYY-MM");
@@ -297,21 +319,11 @@ const processData = () => {
     dateFormatStart = dayjs(dateStart).startOf('year').format("YYYY");
     dateFormatEnd = dayjs(dateEnd).endOf('year').format("YYYY");
     allDates = generateAllYearsInRange(dateFormatStart, dateFormatEnd);
-  } else if (pickerMode.value === 'week') {
-    // Para la semana, obtenemos las semanas completas
-    dateFormatStart = dayjs(dateStart).startOf('week').format("YYYY-WW");
-    dateFormatEnd = dayjs(dateEnd).endOf('week').format("YYYY-WW");
-    allDates = generateAllWeeksInRange(dateFormatStart, dateFormatEnd);
   }
 
   // Filtra los datos dentro del rango
   const filteredData = jsonData.datos.filter(item => {
-    const itemDate = dayjs(item.fecha).format(
-      pickerMode.value === 'day' ? 'YYYY-MM-DD' : 
-      pickerMode.value === 'month' ? 'YYYY-MM' : 
-      pickerMode.value === 'year' ? 'YYYY' : 
-      'YYYY-WW'
-    );
+    const itemDate = dayjs(item.fecha).format('YYYY-MM-DD');
     return itemDate >= dateFormatStart && itemDate <= dateFormatEnd;
   });
 
@@ -323,18 +335,25 @@ const processData = () => {
     });
   });
 
-  // Rellena los datos existentes
+  // Rellena los datos sumando por día, semana, mes o año
   filteredData.forEach(item => {
     const plaza = item.plaza_id;
-    const date = dayjs(item.fecha).format(
-      pickerMode.value === 'day' ? 'YYYY-MM-DD' : 
-      pickerMode.value === 'month' ? 'YYYY-MM' : 
-      pickerMode.value === 'year' ? 'YYYY' : 
-      'YYYY-WW'
-    );
+    let formattedDate;
+
+    // Formato dependiendo del pickerMode
+    if (pickerMode.value === 'day') {
+      formattedDate = dayjs(item.fecha).format('YYYY-MM-DD');
+    } else if (pickerMode.value === 'week') {
+      formattedDate = dayjs(item.fecha).startOf('isoWeek').format('YYYY-WW');
+    } else if (pickerMode.value === 'month') {
+      formattedDate = dayjs(item.fecha).format('YYYY-MM');
+    } else if (pickerMode.value === 'year') {
+      formattedDate = dayjs(item.fecha).format('YYYY');
+    }
+
     const entradas = parseInt(item.entradas, 10);
     if (selectedPlazaIds.value.includes(plaza)) {
-      plazaData[plaza][date] += entradas;  // Sumar las entradas por fecha
+      plazaData[plaza][formattedDate] += entradas;  // Sumar las entradas
     }
   });
 
@@ -350,6 +369,10 @@ const processData = () => {
   }));
 };
 
+const handleErase = () => {
+  BorrarFechas()
+  processData()
+}
 
 
 // Watch para procesar los datos al cambiar fechas, plazas o el modo de fecha
